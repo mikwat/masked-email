@@ -21,12 +21,17 @@ Usage: masked-email [options]
 
 ### Credentials
 
-Credentials can either be provided in a file or via an environment variable.
+The default location for credentials is `~/.fastmail-api-key`. This file
+should contain just the value of an API key which can be created by following
+the instructions at: https://www.fastmail.help/hc/en-us/articles/5254602856719-API-tokens.
 
+Alternatively, the location of the credentials file can be specified with the
+`--credentials` option:
 ```
 $ masked-email --credentials .credentials ...
 ```
 
+Finally, the API key can be specified on the environment as `FASTMAIL_API_KEY`:
 ```
 $ FASTMAIL_API_KEY=... masked-email ...
 ```

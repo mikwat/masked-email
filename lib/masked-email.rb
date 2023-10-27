@@ -6,6 +6,7 @@ require 'optparse'
 
 class MaskedEmail
   BASE_URL = 'https://api.fastmail.com/'
+  API_KEY_FILE = File.expand_path('~/.fastmail-api-key')
 
   class << self
     def run
@@ -117,11 +118,12 @@ class MaskedEmail
         IO.readlines(options[:credentials]).first.chomp
       elsif ENV['FASTMAIL_API_KEY']
         ENV['FASTMAIL_API_KEY']
+      elsif File.exist?(API_KEY_FILE)
+        IO.readlines(API_KEY_FILE).first.chomp
       else
-        puts 'No credentials provided'
+        puts 'No credentials found, see --help'
         exit(1)
       end
     end
   end
 end
-
