@@ -8,6 +8,10 @@ class MaskedEmail
   BASE_URL = 'https://api.fastmail.com/'
   API_KEY_FILE = File.expand_path('~/.fastmail-api-key')
 
+  SET_METHOD = 'MaskedEmail/set'
+  MASKEDEMAIL = 'https://www.fastmail.com/dev/maskedemail'
+  APPLICATION_JSON_CONTENT_TYPE = 'application/json; charset=utf-8'
+
   class << self
     def run
       options = parse_options
@@ -15,55 +19,21 @@ class MaskedEmail
 
       api_token = api_credentials(options)
 
-      # determine masked email api url
-      url = URI("#{BASE_URL}jmap/session")
+      url = URI(BASE_URL)
       http = Net::HTTP.new(url.host, url.port)
       http.use_ssl = true
 
-      request = Net::HTTP::Get.new(url)
-      request['Content-Type'] = 'application/json; charset=utf-8'
-      request["Authorization"] = "Bearer #{api_token}"
-      response = http.request(request)
-      body = response.read_body
-      puts body if options[:verbose]
+      session = fetch_session_map(api_token)
+      account_id = session['primaryAccounts'][MASKEDEMAIL]
+      api_url = session['apiUrl']
 
       exit if options[:dry_run]
 
-      json = JSON.parse(body)
-      accountId = json['primaryAccounts']['https://www.fastmail.com/dev/maskedemail']
-      apiUrl = json['apiUrl']
-
       # create masked email
-      method = 'MaskedEmail/set'
-      methodId = 'k1'
-      request = Net::HTTP::Post.new(apiUrl)
-      request['Content-Type'] = 'application/json; charset=utf-8'
-      request['Authorization'] = "Bearer #{api_token}"
-      request.body = {
-        using: ['https://www.fastmail.com/dev/maskedemail'],
-        methodCalls: [
-          [
-            method,
-            {
-              accountId: accountId,
-              create: {
-                methodId => {
-                  state: 'enabled',
-                  forDomain: options[:domain]
-                }
-              }
-            },
-            'a'
-          ]
-        ]
-      }.to_json
-      response = http.request(request)
-      body = response.read_body
-      puts body if options[:verbose]
-
-      json = JSON.parse(body)
+      method_id = 'k1'
+      json = create_masked_email(api_token, account_id, api_url, method_id)
       methodResponse = json['methodResponses'].find { _1[0] == method }
-      email = methodResponse[1]['created'][methodId]['email']
+      email = methodResponse[1]['created'][method_id]['email']
       puts "Masked email created: #{email}"
     end
 
@@ -124,6 +94,48 @@ class MaskedEmail
         puts 'No credentials found, see --help'
         exit(1)
       end
+    end
+
+    # fetch account information
+    def fetch_session_map(api_token)
+      url = URI("#{BASE_URL}jmap/session")
+      request = Net::HTTP::Get.new(url)
+      request['Content-Type'] = APPLICATION_JSON_CONTENT_TYPE
+      request["Authorization"] = "Bearer #{api_token}"
+      response = http.request(request)
+      body = response.read_body
+      puts body if options[:verbose]
+
+      JSON.parse(body)
+    end
+
+    def create_masked_email(api_token, account_id, api_url, method_id)
+      request = Net::HTTP::Post.new(api_url)
+      request['Content-Type'] = APPLICATION_JSON_CONTENT_TYPE
+      request['Authorization'] = "Bearer #{api_token}"
+      request.body = {
+        using: [MASKEDEMAIL],
+        methodCalls: [
+          [
+            SET_METHOD,
+            {
+              accountId: account_id,
+              create: {
+                method_id => {
+                  state: 'enabled',
+                  forDomain: options[:domain]
+                }
+              }
+            },
+            'a'
+          ]
+        ]
+      }.to_json
+      response = http.request(request)
+      body = response.read_body
+      puts body if options[:verbose]
+
+      JSON.parse(body)
     end
   end
 end
