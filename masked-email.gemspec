@@ -1,6 +1,6 @@
 Gem::Specification.new do |s|
   s.name = 'masked-email'
-  s.version = '0.0.1'
+  s.version = '0.0.2'
   s.summary = 'Masked Email'
   s.description = 'A simple command-line script for generating masked email addresses via Fastmail'
   s.authors = ['Michael Watts']

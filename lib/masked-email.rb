@@ -34,7 +34,8 @@ class MaskedEmail
     response = create_masked_email(account_id, api_url, method_id)
     method_response = response['methodResponses'].find { _1[0] == SET_METHOD }
     email = method_response[1]['created'][method_id]['email']
-    puts "Masked email created: #{email}"
+    puts 'Masked email created:' if @options[:verbose]
+    puts email
   end
 
   private
