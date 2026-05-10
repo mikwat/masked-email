@@ -115,7 +115,7 @@ class MaskedEmail
     request['Content-Type'] = APPLICATION_JSON_CONTENT_TYPE
     request['Authorization'] = "Bearer #{@api_token}"
     request.body = {
-      using: [MASKEDEMAIL],
+      using: ['urn:ietf:params:jmap:core', MASKEDEMAIL],
       methodCalls: [
         [
           SET_METHOD,
